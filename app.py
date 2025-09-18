@@ -1,36 +1,49 @@
-from flask import Flask, request, jsonify, render_template
-from dotenv import load_dotenv
-from langchain_google_genai import ChatGoogleGenerativeAI
+# app.py
+
 import os
+from flask import Flask, render_template, request, jsonify
+from components.workflow import create_workflow
 
-# Carregar .env
-load_dotenv()
-GOOGLE_API_KEY = os.getenv("GEMINI_API_KEY")
+# Instanciar o grafo compilado apenas uma vez ao iniciar a aplicação
+grafo_sd = create_workflow()
 
-# Configurar Flask
-app = Flask(__name__)
+# Inicializa a aplicação Flask
+app = Flask(__name__, template_folder='templates')
 
-# Instanciar o modelo
-llm = ChatGoogleGenerativeAI(
-    model="gemini-2.5-flash",
-    temperature=0.0,
-    api_key=GOOGLE_API_KEY
-)
+def _is_greeting(message: str) -> bool:
+    """Verifica se a mensagem é um cumprimento."""
+    greetings = ["olá", "oi", "bom dia", "boa tarde", "boa noite"]
+    message_lower = message.strip().lower()
+    return any(greeting in message_lower for greeting in greetings)
 
-# Rota inicial -> carrega a página
-@app.route("/")
+@app.route("/", methods=["GET"])
 def index():
+    """Rota principal para renderizar a página inicial do chat."""
     return render_template("index.html")
 
-# Endpoint para o chat
 @app.route("/chat", methods=["POST"])
 def chat():
+    """Rota para processar as mensagens do chat."""
     data = request.json
     pergunta = data.get("message")
+    
+    if not pergunta:
+        return jsonify({"answer": "Por favor, digite uma pergunta."})
 
-    resposta = llm.invoke(pergunta)
+    # Verifica se a mensagem é um cumprimento
+    if _is_greeting(pergunta):
+        return jsonify({"answer": "Olá! Como posso ajudar você hoje?"})
 
-    return jsonify({"answer": resposta.content})
+    # Se não for um cumprimento, invoca o fluxo do agente
+    resultado = grafo_sd.invoke({"pergunta": pergunta})
+    
+    resposta_final = {
+        "answer": resultado.get('resposta'),
+        "acao_final": resultado.get('acao_final'),
+        "citacoes": resultado.get('citacoes')
+    }
+    
+    return jsonify(resposta_final)
 
 if __name__ == "__main__":
-    app.run(debug=True)
+    app.run(host="0.0.0.0", port=int(os.environ.get("PORT", 5000)), debug=True)

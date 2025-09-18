@@ -1,150 +1,195 @@
 <!DOCTYPE html>
 <html lang="pt-BR">
 <head>
-  <meta charset="UTF-8">
-  <title>Chat com Gemini 🤖</title>
-  <style>
-    /* Reset básico */
-    * { margin: 0; padding: 0; box-sizing: border-box; }
+    <meta charset="UTF-8">
+    <title>Chat com Gemini 🤖</title>
+    <style>
+        /* Reset básico */
+        * { margin: 0; padding: 0; box-sizing: border-box; }
 
-    body {
-      font-family: 'Segoe UI', Tahoma, Geneva, Verdana, sans-serif;
-      background-color: #343541; /* cor de fundo do ChatGPT */
-      display: flex;
-      justify-content: center;
-      align-items: center;
-      height: 100vh;
-    }
+        body {
+            font-family: 'Segoe UI', Tahoma, Geneva, Verdana, sans-serif;
+            background-color: #343541; /* cor de fundo do ChatGPT */
+            display: flex;
+            justify-content: center;
+            align-items: center;
+            height: 100vh;
+        }
 
-    .chat-container {
-      display: flex;
-      flex-direction: column;
-      width: 800px;
-      max-width: 95%;
-      height: 90vh;
-      background-color: #444654;
-      border-radius: 10px;
-      overflow: hidden;
-      box-shadow: 0 8px 24px rgba(0,0,0,0.3);
-    }
+        .chat-container {
+            display: flex;
+            flex-direction: column;
+            width: 800px;
+            max-width: 95%;
+            height: 90vh;
+            background-color: #444654;
+            border-radius: 10px;
+            overflow: hidden;
+            box-shadow: 0 8px 24px rgba(0,0,0,0.3);
+        }
 
-    #chat {
-      flex: 1;
-      padding: 20px;
-      overflow-y: auto;
-      display: flex;
-      flex-direction: column;
-      gap: 15px;
-    }
+        #chat {
+            flex: 1;
+            padding: 20px;
+            overflow-y: auto;
+            display: flex;
+            flex-direction: column;
+            gap: 15px;
+        }
 
-    .message {
-      max-width: 70%;
-      padding: 14px 18px;
-      border-radius: 20px;
-      word-wrap: break-word;
-      line-height: 1.4;
-      box-shadow: 0 2px 4px rgba(0,0,0,0.2);
-    }
+        .message {
+            max-width: 70%;
+            padding: 14px 18px;
+            border-radius: 20px;
+            word-wrap: break-word;
+            line-height: 1.4;
+            box-shadow: 0 2px 4px rgba(0,0,0,0.2);
+        }
 
-    .user {
-      align-self: flex-end;
-      background-color: #10a37f;
-      color: #fff;
-      border-bottom-right-radius: 0;
-    }
+        .user {
+            align-self: flex-end;
+            background-color: #10a37f;
+            color: #fff;
+            border-bottom-right-radius: 0;
+        }
 
-    .bot {
-      align-self: flex-start;
-      background-color: #444654;
-      color: #e5e5e5;
-      border-bottom-left-radius: 0;
-    }
+        .bot {
+            align-self: flex-start;
+            background-color: #444654;
+            color: #e5e5e5;
+            border-bottom-left-radius: 0;
+        }
 
-    .input-container {
-      display: flex;
-      border-top: 1px solid #555;
-      padding: 10px;
-      background-color: #40414f;
-    }
+        .input-container {
+            display: flex;
+            border-top: 1px solid #555;
+            padding: 10px;
+            background-color: #40414f;
+        }
 
-    #message {
-      flex: 1;
-      padding: 12px 16px;
-      border-radius: 8px;
-      border: none;
-      outline: none;
-      font-size: 16px;
-      background-color: #303135;
-      color: #e5e5e5;
-    }
+        #message {
+            flex: 1;
+            padding: 12px 16px;
+            border-radius: 8px;
+            border: none;
+            outline: none;
+            font-size: 16px;
+            background-color: #303135;
+            color: #e5e5e5;
+        }
 
-    #message::placeholder {
-      color: #999;
-    }
+        #message::placeholder {
+            color: #999;
+        }
 
-    button {
-      margin-left: 10px;
-      padding: 12px 20px;
-      border: none;
-      border-radius: 8px;
-      background-color: #10a37f;
-      color: white;
-      font-size: 16px;
-      cursor: pointer;
-      transition: 0.2s;
-    }
+        button {
+            margin-left: 10px;
+            padding: 12px 20px;
+            border: none;
+            border-radius: 8px;
+            background-color: #10a37f;
+            color: white;
+            font-size: 16px;
+            cursor: pointer;
+            transition: 0.2s;
+        }
 
-    button:hover {
-      background-color: #0d7a60;
-    }
-  </style>
+        button:hover {
+            background-color: #0d7a60;
+        }
+
+        .message.typing-indicator {
+            opacity: 0.7;
+            font-style: italic;
+        }
+    </style>
 </head>
 <body>
 
-  <div class="chat-container">
-    <div id="chat"></div>
-    <div class="input-container">
-      <input type="text" id="message" placeholder="Digite sua pergunta..." onkeydown="if(event.key==='Enter'){sendMessage()}">
-      <button onclick="sendMessage()">Enviar</button>
+    <div class="chat-container">
+        <div id="chat"></div>
+        <div class="input-container">
+            <input type="text" id="message" placeholder="Digite sua pergunta..." onkeydown="if(event.key==='Enter'){sendMessage()}">
+            <button id="send-button" onclick="sendMessage()">Enviar</button>
+        </div>
     </div>
-  </div>
 
-  <script>
-    async function sendMessage() {
-      const input = document.getElementById("message");
-      const chat = document.getElementById("chat");
+    <script>
+    const messageInput = document.getElementById("message");
+    const sendButton = document.getElementById("send-button");
+    const chatContainer = document.getElementById("chat");
 
-      if(!input.value.trim()) return;
+    function toggleInput(enabled) {
+        messageInput.disabled = !enabled;
+        sendButton.disabled = !enabled;
+        if (enabled) {
+            messageInput.focus();
+        }
+    }
 
-      // Mensagem do usuário
-      const userMsg = document.createElement("div");
-      userMsg.className = "message user";
-      userMsg.textContent = input.value;
-      chat.appendChild(userMsg);
-      chat.scrollTop = chat.scrollHeight;
+    async function sendMessage() {
+      const input = messageInput;
+      const chat = chatContainer;
 
-      // Envia ao backend
-      const response = await fetch("/chat", {
-        method: "POST",
-        headers: { "Content-Type": "application/json" },
-        body: JSON.stringify({ message: input.value })
-      });
+      if(!input.value.trim()) return;
 
-      const data = await response.json();
+      toggleInput(false);
 
-      // Mensagem da IA
-      const botMsg = document.createElement("div");
-      botMsg.className = "message bot";
-      botMsg.textContent = data.answer;
-      chat.appendChild(botMsg);
+      const userMsg = document.createElement("div");
+      userMsg.className = "message user";
+      userMsg.textContent = input.value;
+      chat.appendChild(userMsg);
+      chat.scrollTop = chat.scrollHeight;
+      
+      input.value = "";
+      
+      const typingIndicator = document.createElement("div");
+      typingIndicator.className = "message bot typing-indicator";
+      typingIndicator.textContent = "Digitando...";
+      chat.appendChild(typingIndicator);
+      chat.scrollTop = chat.scrollHeight;
 
-      chat.scrollTop = chat.scrollHeight;
+      try {
+        const response = await fetch("/chat", {
+          method: "POST",
+          headers: { "Content-Type": "application/json" },
+          body: JSON.stringify({ message: userMsg.textContent })
+        });
 
-      // Limpar input
-      input.value = "";
-      input.focus();
-    }
-  </script>
+        const data = await response.json();
 
+        chat.removeChild(typingIndicator);
+
+        const botMsg = document.createElement("div");
+        botMsg.className = "message bot";
+        botMsg.textContent = data.answer;
+        chat.appendChild(botMsg);
+
+        // --- NOVO: Adiciona as citações se existirem ---
+        if (data.citacoes && data.citacoes.length > 0) {
+            const citationsDiv = document.createElement("div");
+            citationsDiv.className = "citations";
+            let citationsHTML = "<strong>Fontes:</strong><br>";
+            data.citacoes.forEach(citation => {
+                citationsHTML += `<span class="citation-item">Documento: ${citation.documento}, Página: ${citation.pagina}.</span><br>`;
+            });
+            citationsDiv.innerHTML = citationsHTML;
+            botMsg.appendChild(citationsDiv);
+        }
+        // --- FIM DA NOVA LÓGICA ---
+
+      } catch (error) {
+        console.error("Erro ao enviar mensagem:", error);
+        chat.removeChild(typingIndicator);
+        const errorMsg = document.createElement("div");
+        errorMsg.className = "message bot";
+        errorMsg.textContent = "Ocorreu um erro. Por favor, tente novamente.";
+        chat.appendChild(errorMsg);
+      } finally {
+        toggleInput(true);
+        chat.scrollTop = chat.scrollHeight;
+      }
+    }
+  </script>
 </body>
 </html>
